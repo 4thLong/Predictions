@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>NFL Predictions</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+    td, th { padding: 8px; border: 1px solid #ddd; text-align: center; }
+    input { width: 50px; padding: 4px; text-align: center; }
+    button { padding: 10px 20px; background: #007BFF; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+
+<h2>NFL Predictions</h2>
+<form id="predictionForm">
+  <table id="fixturesTable">
+    <tr><th>Fixture</th><th>Home Score</th><th>Away Score</th></tr>
+  </table>
+  <label>Your Name: <input type="text" name="name" required></label>
+  <br><br>
+  <button type="submit">Submit Predictions</button>
+</form>
+
+<p id="message"></p>
+
+<script>
+const FIXTURES_SHEET_CSV = "https://docs.google.com/spreadsheets/d/1KBOjUS9HuU-o-pL-sVi3A5ls9omlsEbyd_WbTqM-6gU/edit?usp=sharing"; // from Publish to Web → CSV link
+const SUBMIT_URL = "https://docs.google.com/spreadsheets/d/1KBOjUS9HuU-o-pL-sVi3A5ls9omlsEbyd_WbTqM-6gU/edit?usp=sharing";
+
+// Load fixtures from sheet
+fetch(FIXTURES_SHEET_CSV)
+  .then(response => response.text())
+  .then(text => {
+    const rows = text.trim().split("\n").slice(1); // skip header
+    const table = document.getElementById("fixturesTable");
+
+    rows.forEach(row => {
+      const [home, away, gameId] = row.split(",");
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${home} vs ${away}</td>
+        <td><input type="number" name="${gameId}_home" required></td>
+        <td><input type="number" name="${gameId}_away" required></td>
+      `;
+      table.appendChild(tr);
+    });
+  });
+
+// Handle form submission
+document.getElementById("predictionForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  const formData = new FormData(this);
+  const name = formData.get("name");
+  const predictions = [];
+
+  for (let [key, value] of formData.entries()) {
+    if (key === "name") continue;
+    const [gameId, side] = key.split("_");
+    let prediction = predictions.find(p => p.gameId === gameId);
+    if (!prediction) {
+      prediction = { name, gameId, homeScore: "", awayScore: "" };
+      predictions.push(prediction);
+    }
+    if (side === "home") prediction.homeScore = value;
+    if (side === "away") prediction.awayScore = value;
+  }
+
+  fetch(SUBMIT_URL, {
+    method: "POST",
+    body: JSON.stringify(predictions),
+    headers: { "Content-Type": "application/json" }
+  })
+  .then(() => {
+    document.getElementById("message").textContent = "Predictions submitted!";
+    this.reset();
+  });
+});
+</script>
+
+</body>
+</html>

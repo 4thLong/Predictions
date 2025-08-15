@@ -1,0 +1,20 @@
+<form id="testForm">
+  <input name="Name" placeholder="Your Name" required>
+  <input name="Game1 Home" placeholder="Game 1 Home" required>
+  <button type="submit">Submit</button>
+</form>
+
+<script>
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwHrxEIg7UF1C6jtlrci-6oJZ6I2JmjY3HWR2MXD75n2AiIVwi75TethQ1cQQJz7X2vZg/exec";
+
+document.getElementById("testForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  fetch(WEB_APP_URL, {
+    method: "POST",
+    body: formData,
+    mode: "no-cors"
+  }).then(() => alert("Sent!"))
+    .catch(err => alert("Error: " + err));
+});
+</script>
